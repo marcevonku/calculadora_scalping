@@ -1,0 +1,7 @@
+/vendor/
+.env.desarrollo
+.env.produccion
+.env.testing
+/config
+notas.txt
+

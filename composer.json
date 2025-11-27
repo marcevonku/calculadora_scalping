@@ -1,0 +1,15 @@
+{
+    "name": "lenovo/calculator_scalping",
+    "autoload": {
+        "psr-4": {
+            "Lenovo\\CalculatorScalping\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Marcelo Vonkunoschy",
+            "email": "marcevonku@gmail.com"
+        }
+    ],
+    "require": {}
+}
