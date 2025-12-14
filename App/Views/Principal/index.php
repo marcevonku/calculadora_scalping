@@ -1,5 +1,6 @@
 <?php
-
+// Definir base url para usar en el javascript
+$baseUrl = '/calculator_scalping';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -7,7 +8,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Trading - Acciones y CEDEARS</title>
+    <title>Calculadora de Trading / Scalping -> Acciones y CEDEARs</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
 </head>
@@ -19,13 +20,13 @@
         </div>
 
         <ul class="nav nav-tabs">
-            <li class="active"><a data-toggle="tab" href="#solapa1">📈 Datos de Brokers</a></li>
+            <li class="active"><a data-toggle="tab" href="#solapa1">📋 Historial de Operaciones</a></li>
             <li><a data-toggle="tab" href="#solapa2">📈 Calculos de Operaciones</a></li>
-            <li><a data-toggle="tab" href="#solapa3"> 📋 Historial de Operaciones</a></li>
+            <li><a data-toggle="tab" href="#solapa3"> 📈 Datos de Brokers</a></li>
         </ul>
 
         <div class="tab-content">
-            <div id="solapa1" class="tab-pane">
+            <div id="solapa1" class="tab-pane active">
                 <div class="section">
                     <div class="section-header">
                         <h4>📋 Historial de Operaciones Abiertas - Cerradas</h4>
@@ -50,7 +51,7 @@
                     <div class="section-content">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="tnaBancaria">TNA Bancaria (%) HOY</label>
+                                <label for="tnaBancaria">TNA Bancaria / Billeteras virtuales (%) HOY</label>
                                 <input type="number" id="tnaBancaria" value=" " step="0.001"
                                     oninput="calcularTNA(); calcularCoeficienteBase()">
                             </div>
@@ -74,7 +75,7 @@
                         <form id="brokerConfigForm">
                             <div class="form-grid">
                                 <div class="form-group">
-                                    <label for="nombreBroker">Nombre del Broker</label>
+                                    <label for="nombreBroker">Seleccione del Broker</label>
                                     <select id="selectBrokerOperacion" class="form-control"
                                         onchange="actualizarDatosBroker()" required>
                                         <option value="" disabled selected>Seleccione un Broker</option>
@@ -99,7 +100,7 @@
                             </div>
                             <div class="form-grid">
                                 <div class="form-group">
-                                    <label for="nombreAccion">Nombre/Sigla de la Acción</label>
+                                    <label for="nombreAccion">Nombre / Sigla de la Acción</label>
                                     <input type="text" id="nombreAccion" placeholder="AAPL, etc." required>
                                 </div>
                                 <div class="form-group">
@@ -109,18 +110,23 @@
                             </div>
                             <div class="form-grid">
                                 <div class="form-group">
+                                    <p>Suma porcentual total de tasas de compra</p>
                                     <label for="ganciaProyectada">Coef Base Compra (%)</label>
                                     <div class="value" id="coeficienteBase">0.000000%</div>
                                 </div>
                                 <div class="form-group">
+                                    <p>Valor tasa de equilibrio entre compra y venta
+                                        a aplicar para recuperar misma inversión luego de pagar todos los aranceles</p>
                                     <label for="ganciaProyectada">Punto Equilibrio (%)</label>
                                     <div class="value" id="puntoEquilibrio">0.000000%</div>
                                 </div>
                                 <div class="form-group">
+                                    <p>Valor tasa para no perder contra tasa bancos x 365 días</p>
                                     <label for="ganciaProyectada">TNA 365 + P.Equilibrio (%)</label>
                                     <div class="value" id="tna365pe">0.000000%</div>
                                 </div>
                                 <div class="form-group">
+                                    <p>Valor tasa para no perder contra tasa bancos x 260 días</p>
                                     <label for="ganciaProyectada">TNA 260 + P.Equilibrio (%)</label>
                                     <div class="value" id="tna260pe">0.000000%</div>
                                 </div>
@@ -136,11 +142,11 @@
                                     <div class="value" id="precioPuntoEquilibrio">0.000000%</div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="pbvtna365">PBV | P.E. | TNA365 ($)</label>
+                                    <label for="pbvtna365">Prec.Bruto Venta | P.E. + TNA365 ($)</label>
                                     <div class="value" id="pbvtna365">0.000000%</div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="pbvtna260">PBV | P.E. | TNA260 ($)</label>
+                                    <label for="pbvtna260">Prec.Bruto Venta | P.E. + TNA260 ($)</label>
                                     <div class="value" id="pbvtna260">0.000000%</div>
                                 </div>
                             </div>
@@ -163,7 +169,7 @@
                         </form>
 
                         <div style="margin-top: 20px; text-align: center;">
-                            <button type="button" class="btn btn-success" onclick="guardarTransaccion()">
+                            <button type="button" class="btn btn-success" onclick="cargarPrevisualizacion()">
                                 💾 Cargar Pre Visualización
                             </button>
                             <button type="button" class="btn btn-warning" onclick="limpiarFormulario()">
@@ -172,7 +178,7 @@
                         </div>
 
 
-                        <div class="table-container">
+                        <div class="table-container" id="contenedorPrevisualizacion" style="display: none;">
                             <table class="calculation-table">
                                 <thead>
                                     <tr>
@@ -270,7 +276,7 @@
                         <div>
 
 
-                            <div style="margin-top: 20px; text-align: center;">
+                            <div id="botonesOperacion" style="margin-top: 20px; text-align: center; display: none;">
                                 <button type="button" class="btn btn-success" onclick="guardarTransaccion()">
                                     💾 Guardar Operación
                                 </button>
@@ -286,7 +292,7 @@
 
             </div>
 
-            <div id="solapa3" class="tab-pane active">
+            <div id="solapa3" class="tab-pane">
                 <div class="section">
                     <div class="section-header">
                         <h4>📈 Datos de Brokers - Aranceles - Comisiones - Impuestos</h4>
@@ -375,6 +381,17 @@
             pbventa: 0.0
         };
 
+        // Función para mostrar alertas
+        function mostrarAlerta(mensaje, tipo) {
+            // Puedes usar un alert simple o una implementación más sofisticada
+            // Por simplicidad y compatibilidad rápida:
+            if (tipo === 'error') {
+                alert('❌ ' + mensaje);
+            } else {
+                alert('✅ ' + mensaje);
+            }
+        }
+
         function calcularTNA() {
             // Obtiene el valor del elemento HTML con id 'tnaBancaria', lo convierte a número decimal
             // Si el valor está vacío o no es válido, usa 0 como valor por defecto
@@ -461,18 +478,18 @@
             document.getElementById('vbventa').textContent = configuracion.pbventa.toFixed(6);
 
             // CONDICIONAL CORREGIDO - Mostrar alerta si se especifica y hay un valor en PorcGanProy
-            if (mostrarAlerta && !isNaN(PorcGanProy)) {
+            if (mostrarAlerta && !isNaN(configuracion.PorcGanProy)) {
                 let mensaje = "";
 
                 // Orden correcto: de menor a mayor comparación (más específico primero)
                 if (configuracion.PorcGanProy < configuracion.coeficienteBase) {
-                    mensaje = "⚠️ ALERTA BAJA: La proyección (" + configuracion.PorcGanProy.toFixed(8) + "%) es menor al coeficiente base (" + coeficienteBase.toFixed(8) + "%)";
+                    mensaje = "⚠️ ALERTA BAJA: La proyección (" + configuracion.PorcGanProy.toFixed(8) + "%) es menor al coeficiente base (" + configuracion.coeficienteBase.toFixed(8) + "%)";
                 } else if (configuracion.PorcGanProy < configuracion.puntoEquilibrioCalc && configuracion.PorcGanProy > configuracion.coeficienteBase) {
-                    mensaje = "⚠️ ALERTA MEDIA: La proyección (" + configuracion.PorcGanProy.toFixed(8) + "%) es menor al punto de equilibrio calculado (" + puntoEquilibrioCalc.toFixed(8) + "%)";
+                    mensaje = "⚠️ ALERTA MEDIA: La proyección (" + configuracion.PorcGanProy.toFixed(8) + "%) es menor al punto de equilibrio calculado (" + configuracion.puntoEquilibrioCalc.toFixed(8) + "%)";
                 } else if (configuracion.PorcGanProy < configuracion.tna365pe && configuracion.PorcGanProy > configuracion.puntoEquilibrioCalc) {
-                    mensaje = "⚠️ ALERTA ALTA: La proyección (" + configuracion.PorcGanProy.toFixed(8) + "%) es menor a punto de equilibrio más la TNA de las billeteras 365 días (" + tna365pe.toFixed(8) + "%)";
-                } else if (configuracion.PorcGanProy < configuracion.tna260pe && configuracion.PorcGanProy > configuracion.configuracion.tna365pe) {
-                    mensaje = "⚠️ ALERTA CRÍTICA: La proyección (" + configuracion.PorcGanProy.toFixed(8) + "%) es menor a punto de equilibrio más la TNA de las billeteras 260 días (" + tna260pe.toFixed(8) + "%)";
+                    mensaje = "⚠️ ALERTA ALTA: La proyección (" + configuracion.PorcGanProy.toFixed(8) + "%) es menor a punto de equilibrio más la TNA de las billeteras 365 días (" + configuracion.tna365pe.toFixed(8) + "%)";
+                } else if (configuracion.PorcGanProy < configuracion.tna260pe && configuracion.PorcGanProy > configuracion.tna365pe) {
+                    mensaje = "⚠️ ALERTA CRÍTICA: La proyección (" + configuracion.PorcGanProy.toFixed(8) + "%) es menor a punto de equilibrio más la TNA de las billeteras 260 días (" + configuracion.tna260pe.toFixed(8) + "%)";
                 } else {
                     mensaje = "✅ PROYECCIÓN ÓPTIMA: La proyección (" + configuracion.PorcGanProy.toFixed(8) + "%) está por encima de todos los parámetros de referencia";
                 }
@@ -504,9 +521,9 @@
             const valorNeto = parseFloat(document.getElementById('valorNeto').value) || 0;
             const PorcGanProy = parseFloat(document.getElementById('PorcGanProy').value) || 0;
             // Cálculos de compra
-            const comisionCompra = valorNeto * (comisionCompra / 100);
-            const derechoMercadoCompra = valorNeto * (derechoMercado / 100);
-            const ivaCompra = (comisionCompra + derechoMercadoCompra) * (ivaImpuesto / 100);
+            const comisionCompra = valorNeto * (configuracion.comisionCompra / 100);
+            const derechoMercadoCompra = valorNeto * (configuracion.mercadoCompra / 100);
+            const ivaCompra = (comisionCompra + derechoMercadoCompra) * (configuracion.ivaCompra / 100);
             const valorBrutoCompra = valorNeto + comisionCompra + derechoMercadoCompra + ivaCompra;
 
             // Imprimir cada variable individualmente
@@ -524,11 +541,11 @@
 
 
             // Cálculos de venta
-            const gananciaProyectadaValor = valorBrutoCompra * (gananciaProyectada / 100);
+            const gananciaProyectadaValor = valorBrutoCompra * (PorcGanProy / 100);
             const precioNetoVenta = valorBrutoCompra + gananciaProyectadaValor;
             const comisionVenta = precioNetoVenta * (configuracion.comisionCompra / 100);
-            const derechoMercadoVenta = precioNetoVenta * (configuracion.derechoMercado / 100);
-            const ivaVenta = (comisionVenta + derechoMercadoVenta) * (configuracion.ivaImpuesto / 100);
+            const derechoMercadoVenta = precioNetoVenta * (configuracion.mercadoCompra / 100);
+            const ivaVenta = (comisionVenta + derechoMercadoVenta) * (configuracion.ivaCompra / 100);
             const precioBrutoVenta = precioNetoVenta + comisionVenta + derechoMercadoVenta + ivaVenta;
 
             // Ganancia neta
@@ -573,11 +590,27 @@
             }).format(valor);
         }
 
+        function limpiarCalculos() {
+            // No tocamos tnaBancaria
+            const ids = [
+                'coeficienteBase', 'puntoEquilibrio', 'tna365pe', 'tna260pe',
+                'vbcompra', 'precioPuntoEquilibrio', 'pbvtna365', 'pbvtna260', 'vbventa'
+            ];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = (id.includes('vbcompra') || id.includes('precio') || id.includes('pbv') || id.includes('vbventa')) ? '$0.000000' : '0.000000%';
+            });
+            // Limpiar inputs de la tabla
+            const tableInputs = document.querySelectorAll('#contenedorPrevisualizacion input');
+            tableInputs.forEach(input => input.value = '');
+        }
+
         function guardarTransaccion() {
 
             const nombreAccion = document.getElementById('nombreAccion').value;
             const cantidad = parseInt(document.getElementById('cantidadAcciones').value) || 0;
             const valorNeto = parseFloat(document.getElementById('valorNeto').value) || 0;
+            const selectBroker = document.getElementById('selectBrokerOperacion');
 
             if (!nombreAccion || cantidad <= 0 || valorNeto <= 0) {
                 mostrarAlerta('Por favor complete todos los campos requeridos', 'error');
@@ -587,20 +620,23 @@
             // Obtener valores calculados de la tabla
             const valorBrutoCompraTotal = parseFloat(document.getElementById('valorBrutoCompraTotal').value.replace(/[^\d.-]/g, '')) || 0;
             const gananciaNetaTotal = parseFloat(document.getElementById('gananciaNetaTotal').value.replace(/[^\d.-]/g, '')) || 0;
-            const gananciaProyectada = parseFloat(document.getElementById('gananciaProyectada').value) || 0;
+            const gananciaProyectada = parseFloat(document.getElementById('PorcGanProy').value) || 0;
             // Cálculos de compra
             const comisionCompra = valorNeto * (configuracion.comisionCompra / 100);
-            const derechoMercadoCompra = valorNeto * (configuracion.derechoMercado / 100);
-            const ivaCompra = (comisionCompra + derechoMercadoCompra) * (configuracion.ivaImpuesto / 100);
+            const derechoMercadoCompra = valorNeto * (configuracion.mercadoCompra / 100);
+            const ivaCompra = (comisionCompra + derechoMercadoCompra) * (configuracion.ivaCompra / 100);
             const valorBrutoCompra = valorNeto + comisionCompra + derechoMercadoCompra + ivaCompra;
+
+
 
             // Cálculos de venta
             const gananciaProyectadaValor = valorBrutoCompra * (gananciaProyectada / 100);
             const precioNetoVenta = valorBrutoCompra + gananciaProyectadaValor;
             const comisionVenta = precioNetoVenta * (configuracion.comisionCompra / 100);
-            const derechoMercadoVenta = precioNetoVenta * (configuracion.derechoMercado / 100);
-            const ivaVenta = (comisionVenta + derechoMercadoVenta) * (configuracion.ivaImpuesto / 100);
+            const derechoMercadoVenta = precioNetoVenta * (configuracion.mercadoCompra / 100);
+            const ivaVenta = (comisionVenta + derechoMercadoVenta) * (configuracion.ivaCompra / 100);
             const precioBrutoVenta = precioNetoVenta + comisionVenta + derechoMercadoVenta + ivaVenta;
+            const gananciaNetaTotalCalculada = gananciaProyectadaValor * cantidad;
 
             // Crear objeto transacción
             const transaccion = {
@@ -608,12 +644,18 @@
                 id: Date.now(),
                 fecha: new Date().toLocaleDateString('es-AR'),
                 hora: new Date().toLocaleTimeString('es-AR'),
+                // TNA y Tasas
+                tna: configuracion.tna || 0,
+                tnaDiaria365: configuracion.tnaDiaria365 || 0,
+                tnaDiaria260: configuracion.tnaDiaria260 || 0,
                 // PORCENTAJES DE CONFIGURACIÓN (desde HTML) // datos de plataforma o broker
-                nombreBroker: document.getElementById('selectBrokerOperacion').options[document.getElementById('selectBrokerOperacion').selectedIndex].text,
-                broker: configuracion.nombreBroker,
+                'broker_id': selectBroker.value,
+                'nombreBroker': selectBroker.options[selectBroker.selectedIndex].text,
+                'broker': configuracion.nombreBroker,
                 comisionPorcentaje: parseFloat(document.getElementById('calc_comisionCompra').value), // % de comisión
                 derechoMercadoPorcentaje: parseFloat(document.getElementById('calc_derechoMercado').value), // % derecho mercado
                 ivaPorcentaje: parseFloat(document.getElementById('calc_ivaImpuesto').value), // % IVA
+                PorcGanProy: parseFloat(document.getElementById('PorcGanProy').value) || 0, // % Ganancia Proyectada
                 // VALORES MONETARIOS CALCULADOS DE COMPRA
                 nombreAccion: nombreAccion,
                 cantidad: cantidad,
@@ -622,16 +664,16 @@
                 derechoMercadoCompra: derechoMercadoCompra, // Valor en dinero
                 ivaCompra: ivaCompra, // Valor en dinero
                 valorBrutoCompra: valorBrutoCompra, // Valor en dinero                
-                valorBrutoCompraTotal: valorBrutoCompraTotal,
+                valorBrutoCompraTotal: valorBrutoCompra * cantidad,
                 // VALORES MONETARIOS CALCULADOS DE VENTA
-                gananciaProyectadaPorcentaje: parseFloat(document.getElementById('gananciaProyectada').value), // % ganancia
+                gananciaProyectadaPorcentaje: parseFloat(document.getElementById('PorcGanProy').value), // % ganancia
                 gananciaProyectadaValor: gananciaProyectadaValor, // Valor en dinero
                 precioNetoVenta: precioNetoVenta,
                 comisionVenta: comisionVenta,
                 derechoMercadoVenta: derechoMercadoVenta,
                 ivaVenta: ivaVenta,
                 precioBrutoVenta: precioBrutoVenta,
-                gananciaNetaTotal: gananciaNetaTotal,
+                gananciaNetaTotal: gananciaNetaTotalCalculada,
             };
 
             //console.table(transaccion);
@@ -639,11 +681,8 @@
             // Agregar a la lista de transacciones
             transacciones.unshift(transaccion); // unshift para agregar al principio
 
-            //Guardar en localStorage
-            localStorage.setItem('transacciones', JSON.stringify(transacciones));
-
             // Enviar al servidor
-            fetch('calculadora_controlador.php', {
+            fetch('<?php echo $baseUrl; ?>/Principal/guardarTransaccion', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -653,13 +692,28 @@
                     transaccion: transaccion
                 })
             })
-
-                .then(response => response.json())
+                .then(response => response.text())
+                .then(text => {
+                    console.log("Server response:", text);
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        throw new Error("Respuesta del servidor no válida: " + text.substring(0, 100));
+                    }
+                })
                 .then(data => {
                     if (data.success) {
-                        localStorage.setItem('transaccion', JSON.stringify(transaccion)); // Guarda la transacción en el almacenamiento local del navegador
                         mostrarAlerta('Transacción guardada exitosamente', 'success');
-                        mostrarTransacciones();
+
+                        // Actualizar el historial desde el servidor
+                        obtenerHistorialDesdeServidor();
+
+                        // Limpiar previsualización (ocultar)
+                        document.getElementById('contenedorPrevisualizacion').style.display = 'none';
+                        document.getElementById('botonesOperacion').style.display = 'none';
+                        // Opcional: Limpiar formulario para nueva carga inmediata?
+                        // El usuario dijo "Además se debe limpiar la previsualización", no dijo limpiar el formulario.
+                        // Pero "calcular nueva operación" limpia el formulario. "guardar operación" guarda y limpia previsualización.
                     } else {
                         mostrarAlerta('Error al guardar transacción: ' + data.message, 'error');
                     }
@@ -667,8 +721,6 @@
                 .catch(error => {
                     console.error('Error:', error);
                     mostrarAlerta('Error de conexión al guardar transacción', 'error');
-                    // Aún así actualizar la vista local
-                    mostrarTransacciones();
                 });
         }
 
@@ -848,11 +900,22 @@
         // Inicialización
         document.addEventListener('DOMContentLoaded', function () {
             mostrar_datos('Brokers');
-            mostrarTransacciones();
+            // Cargar historial inicial si viene de PHP (opcional, o llamar a fetch)
+            obtenerHistorialDesdeServidor();
         });
 
-        function mostrarTransacciones() {
-            const listado = JSON.parse(localStorage.getItem('transacciones')) || [];
+        function obtenerHistorialDesdeServidor() {
+            fetch('<?php echo $baseUrl; ?>/Principal/historialOperaciones')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        mostrarTransacciones(data.data);
+                    }
+                })
+                .catch(error => console.error('Error cargando historial:', error));
+        }
+
+        function mostrarTransacciones(listado = []) {
             let html = '<div class="table-responsive"><table class="table table-striped table-bordered transactions-table">';
             html += '<thead class="thead-dark"><tr>' +
                 '<th>Fecha</th>' +
@@ -862,29 +925,55 @@
                 '<th>Compra Total</th>' +
                 '<th>Venta Total</th>' +
                 '<th>Ganancia Neta</th>' +
+                '<th>Acciones</th>' +
                 '</tr></thead><tbody>';
 
             if (listado.length > 0) {
                 listado.forEach(t => {
                     // Asegurar que los valores sean numéricos para formatear
-                    const compra = typeof t.valorBrutoCompraTotal === 'string' ? parseFloat(t.valorBrutoCompraTotal) : t.valorBrutoCompraTotal;
-                    const venta = typeof t.precioBrutoVentaTotal === 'string' ? parseFloat(t.precioBrutoVentaTotal) : t.precioBrutoVentaTotal;
-                    const ganancia = typeof t.gananciaNetaTotal === 'string' ? parseFloat(t.gananciaNetaTotal) : t.gananciaNetaTotal;
+                    // Nota: los nombres de campos pueden venir diferentes de la DB (snake_case)
+                    // Ajustar mapeo si es necesario
+                    const fecha = t.fecha_operacion_venta || t.fecha;
+                    const nombreBroker = t.nombreBroker || t.nombre_broker || '-';
+                    const nombreAccion = t.nombre_accion || t.nombreAccion;
+                    const cantidad = t.cantidad_acciones || t.cantidad;
+                    const idOp = t.id;
+                    const vigenteVal = (t.vigente == 1);
+
+                    const compra = parseFloat(t.valor_bruto_compra || t.valorBrutoCompraTotal || 0);
+                    const venta = parseFloat(t.precio_bruto_venta || t.precioBrutoVentaTotal || 0);
+                    const ganancia = parseFloat(t.ganancia_neta_total || t.gananciaNetaTotal || 0);
+
+                    // Datos completos para el modal (los guardamos en un atributo data o los pasamos)
+                    // Para simplificar, pasamos el objeto entero encodeado
+                    const dataObj = encodeURIComponent(JSON.stringify(t));
 
                     html += `<tr>
-                        <td>${t.fecha} ${t.hora}</td>
-                        <td>${t.nombreBroker || '-'}</td>
-                        <td>${t.nombreAccion}</td>
-                        <td>${t.cantidad}</td>
+                        <td>${fecha}</td>
+                        <td>${nombreBroker}</td>
+                        <td>${nombreAccion}</td>
+                        <td>${cantidad}</td>
                         <td>${formatearMoneda(compra)}</td>
                         <td>${formatearMoneda(venta)}</td>
                         <td style="font-weight:bold; color:${ganancia >= 0 ? '#155724' : '#721c24'}">
                             ${formatearMoneda(ganancia)}
                         </td>
+                        <td style="text-align:center; display:flex; gap:10px; justify-content:center;">
+                            <button class="btn btn-info btn-sm" onclick="verDetalle('${dataObj}')" title="Ver Detalle">
+                                <i class="glyphicon glyphicon-eye-open"></i>
+                            </button>
+                            <label class="switch-ph" title="Vigente">
+                                <input type="checkbox" ${vigenteVal ? 'checked' : ''} onchange="toggleVigencia(${idOp}, this)">
+                                <span class="slider-ph"></span>
+                            </label>
+                            <button class="btn btn-danger btn-sm" onclick="eliminarOperacion(${idOp})" title="Eliminar">
+                                <i class="glyphicon glyphicon-trash"></i>
+                            </button>
+                        </td>
                     </tr>`;
                 });
             } else {
-                html += '<tr><td colspan="7" class="text-center">No hay transacciones guardadas.</td></tr>';
+                html += '<tr><td colspan="8" class="text-center">No hay transacciones guardadas.</td></tr>';
             }
             html += '</tbody></table></div>';
 
@@ -892,6 +981,189 @@
             if (container) {
                 container.innerHTML = html;
             }
+        }
+
+        function verDetalle(encodedObj) {
+            const t = JSON.parse(decodeURIComponent(encodedObj));
+
+            // Datos generales
+            const fecha = t.fecha_operacion_venta || t.fecha;
+            const hora = t.hora || '';
+            document.getElementById('m_fecha').textContent = fecha + (hora ? ' ' + hora : '');
+            document.getElementById('m_broker').textContent = t.nombreBroker || t.nombre_broker;
+            document.getElementById('m_accion').textContent = t.nombre_accion || t.nombreAccion;
+            document.getElementById('m_cantidad').textContent = t.cantidad_acciones || t.cantidad || 0;
+
+            // Tasas
+            document.getElementById('m_tna').textContent = (t.tasa_banco || t.tna || 0) + '%';
+            document.getElementById('m_tna365').textContent = (t.tn_365 || t.tnaDiaria365 || 0) + '%';
+            document.getElementById('m_tna260').textContent = (t.tn_260 || t.tnaDiaria260 || 0) + '%';
+
+            // Porcentajes Configuración (Si no están guardados en la op, usar defaults o 0)
+            const comisionPorc = t.valor_comision_compra_porc || t.comisionPorcentaje || 0; // Ojo: hay que ver si guardamos esto. Si no, calculamos o mostramos ???
+            // Revisando `guardarTransaccion`: guardamos `comisionPorcentaje`, `derechoMercadoPorcentaje`, `ivaPorcentaje` en JSON, 
+            // pero en la DB aplanar en columnas específicas? 
+            // En `PrincipalController` no mapeamos los porcentajes a columnas individuales, solo los montos.
+            // PERO el objeto JSON 't' viene de la DB o del localStorage ? 
+            // Viene de DB (`obtenerTodas`). `OperacionesModel` hace `select *`.
+            // Si la columna no existe en DB, no vendrá.
+            // Solución: Usar los valores monetarios para deducir o mostrar "-" si no tenemos el % exacto, 
+            // O bien, confiar en que el JSON `t` tenga las propiedades si las agregamos al controller.
+
+            // Re-mapeo rápido de valores numéricos
+            const q = parseFloat(t.cantidad_acciones || t.cantidad || 1);
+
+            // Valores Unitarios (Si en DB guardamos totales, dividimos por Q. Si guardamos unitarios, usamos directos)
+            // Model: `valor_neto_compra` (unitario?), `valor_comision_compra` (monto total o unitario?)
+            // Revisar controller: 
+            // 'valor_neto_compra' => $datos['valorNeto'], (Unitario)
+            // 'valor_comision_compra' => $datos['comisionCompra'], (Unitario, pues en JS es `valorNeto * %`)
+
+            const vNeto = parseFloat(t.valor_neto_compra || t.valorNeto || 0);
+            const comCompra = parseFloat(t.valor_comision_compra || t.comisionCompra || 0);
+            const derCompra = parseFloat(t.derecho_mercado_compra || t.derechoMercadoCompra || 0);
+            const ivaCompra = parseFloat(t.iva_compra || t.ivaCompra || 0);
+            const vBrutoCompra = parseFloat(t.valor_bruto_compra || t.valorBrutoCompra || 0);
+
+            // PORCENTAJES (Desde DB o calculados para operaciones viejas)
+            // Priorizamos lo guardado en DB
+            let pComision = parseFloat(t.comision_porcentaje || t.comisionPorcentaje || 0);
+            let pDerecho = parseFloat(t.derecho_mercado_porcentaje || t.derechoMercadoPorcentaje || 0);
+            let pIva = parseFloat(t.iva_porcentaje || t.ivaPorcentaje || 0);
+
+            // Fallback para operaciones viejas sin porcentaje guardado: CALCULAR
+            if (pComision === 0 && pDerecho === 0 && vNeto > 0) {
+                if (comCompra > 0) pComision = (comCompra / vNeto) * 100;
+                if (derCompra > 0) pDerecho = (derCompra / vNeto) * 100;
+                const baseIva = comCompra + derCompra;
+                if (baseIva > 0 && ivaCompra > 0) {
+                    pIva = (ivaCompra / baseIva) * 100;
+                }
+            }
+
+            // Valores Venta
+            // Ganancia Proyectada (Monto) - OJO: en DB guardamos `ganancia_neta_por_accion` y `ganancia_neta_total`
+            // Pero en JS `gananciaProyectadaValor` es el monto de ganancia sobre el bruto compra.
+            // `ganancia_neta_por_accion` debería ser eso.
+            const gananciaUnit = parseFloat(t.ganancia_neta_por_accion || 0);
+            // Porcentaje Ganancia: Preferir guardado, sino calcular
+            let gananciaPorc = parseFloat(t.ganancia_proyectada_porcentaje || t.PorcGanProy || 0);
+            if (gananciaPorc === 0 && vBrutoCompra > 0 && gananciaUnit > 0) {
+                gananciaPorc = (gananciaUnit / vBrutoCompra) * 100;
+            }
+
+            const vNetoVenta = parseFloat(t.precio_neto_venta || t.precioNetoVenta || 0);
+            const comVenta = parseFloat(t.valor_comision_venta || t.comisionVenta || 0);
+            const derVenta = parseFloat(t.derecho_mercado_venta || t.derechoMercadoVenta || 0);
+            const ivaVenta = parseFloat(t.iva_venta || t.ivaVenta || 0);
+            const vBrutoVenta = parseFloat(t.precio_bruto_venta || t.precioBrutoVenta || 0);
+
+            // Elementos DOM
+            document.getElementById('m_valorNeto').textContent = formatearMoneda(vNeto);
+            document.getElementById('m_valorNetoTotal').textContent = formatearMoneda(vNeto * q);
+
+            // Asignar Porcentajes (usando las variables resueltas pComision, pDerecho, etc.)
+            document.getElementById('m_comisionPorc').textContent = pComision.toFixed(3) + '%';
+            document.getElementById('m_derechoPorc').textContent = pDerecho.toFixed(3) + '%';
+            document.getElementById('m_ivaPorc').textContent = pIva.toFixed(2) + '%';
+
+            document.getElementById('m_comisionCompra').textContent = formatearMoneda(comCompra);
+            document.getElementById('m_comisionCompraTotal').textContent = formatearMoneda(comCompra * q);
+
+            document.getElementById('m_derechoCompra').textContent = formatearMoneda(derCompra);
+            document.getElementById('m_derechoCompraTotal').textContent = formatearMoneda(derCompra * q);
+
+            document.getElementById('m_ivaCompra').textContent = formatearMoneda(ivaCompra);
+            document.getElementById('m_ivaCompraTotal').textContent = formatearMoneda(ivaCompra * q);
+
+            document.getElementById('m_valorBrutoCompra').textContent = formatearMoneda(vBrutoCompra);
+            document.getElementById('m_valorBrutoCompraTotal').textContent = formatearMoneda(vBrutoCompra * q);
+
+            // Venta
+            // Ganancia % 
+            document.getElementById('m_gananciaProyPorc').textContent = gananciaPorc.toFixed(2) + '%';
+            document.getElementById('m_gananciaProy').textContent = formatearMoneda(gananciaUnit);
+            document.getElementById('m_gananciaProyTotal').textContent = formatearMoneda(gananciaUnit * q);
+
+            document.getElementById('m_precioNetoVenta').textContent = formatearMoneda(vNetoVenta);
+            document.getElementById('m_precioNetoVentaTotal').textContent = formatearMoneda(vNetoVenta * q);
+
+            document.getElementById('m_comisionVentaPorc').textContent = pComision.toFixed(3) + '%';
+            document.getElementById('m_comisionVenta').textContent = formatearMoneda(comVenta);
+            document.getElementById('m_comisionVentaTotal').textContent = formatearMoneda(comVenta * q);
+
+            document.getElementById('m_derechoVentaPorc').textContent = pDerecho.toFixed(3) + '%';
+            document.getElementById('m_derechoVenta').textContent = formatearMoneda(derVenta);
+            document.getElementById('m_derechoVentaTotal').textContent = formatearMoneda(derVenta * q);
+
+            document.getElementById('m_ivaVentaPorc').textContent = pIva.toFixed(2) + '%';
+            document.getElementById('m_ivaVenta').textContent = formatearMoneda(ivaVenta);
+            document.getElementById('m_ivaVentaTotal').textContent = formatearMoneda(ivaVenta * q);
+
+
+
+            document.getElementById('m_precioBrutoVenta').textContent = formatearMoneda(vBrutoVenta);
+            document.getElementById('m_precioBrutoVentaTotal').textContent = formatearMoneda(vBrutoVenta * q);
+
+            const gananciaNetaTotal = parseFloat(t.ganancia_neta_total || t.gananciaNetaTotal || (gananciaUnit * q));
+            const elGanancia = document.getElementById('m_gananciaNeta');
+            const elGananciaTotal = document.getElementById('m_gananciaNetaTotal');
+
+            elGanancia.textContent = formatearMoneda(gananciaUnit);
+            elGananciaTotal.textContent = formatearMoneda(gananciaNetaTotal);
+
+            const color = gananciaNetaTotal >= 0 ? '#155724' : '#721c24';
+            elGanancia.style.color = color;
+            elGananciaTotal.style.color = color;
+
+            $('#modalDetalleOperacion').modal('show');
+        }
+
+        function toggleVigencia(id, checkbox) {
+            const nuevoEstado = checkbox.checked ? 1 : 0;
+
+            fetch('<?php echo $baseUrl; ?>/Principal/cambiarEstadoOperacion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id, vigente: nuevoEstado })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        alert('Error al actualizar estado: ' + (data.error || 'Desconocido'));
+                        checkbox.checked = !checkbox.checked; // Revertir
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Error de conexión');
+                    checkbox.checked = !checkbox.checked;
+                });
+        }
+
+        function eliminarOperacion(id) {
+            if (!confirm('¿Está seguro de que desea eliminar esta operación? Esta acción no se puede deshacer.')) return;
+
+            fetch('<?php echo $baseUrl; ?>/Principal/eliminarOperacion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        // Asumiendo que tienes una función para mostrar alertas
+                        // mostrarAlerta('Operación eliminada', 'success');
+                        alert('✅ Operación eliminada correctamente.');
+                        obtenerHistorialDesdeServidor(); // Recargar tabla
+                    } else {
+                        alert('❌ Error al eliminar: ' + (data.error || 'Desconocido'));
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('❌ Error de conexión');
+                });
         }
 
         function cargarSelectBrokers() {
@@ -943,7 +1215,212 @@
                 calcularCoeficienteBase();
             }
         }
+        // Función para validar y cargar previsualización
+        function cargarPrevisualizacion() {
+            let errores = [];
+
+            // 1. Validar TNA Bancaria
+            const tna = parseFloat(document.getElementById('tnaBancaria').value) || 0;
+            if (tna <= 0) {
+                errores.push("Debe cargar la TNA Bancaria de hoy.");
+            }
+
+            // 2. Validar Broker seleccionado
+            const selectBroker = document.getElementById('selectBrokerOperacion');
+            if (!selectBroker.value || selectBroker.value === "") {
+                errores.push("Debe seleccionar un Broker.");
+            }
+
+            // 3. Validar Nombre/Sigla de la Acción
+            const nombreAccion = document.getElementById('nombreAccion').value.trim();
+            if (nombreAccion === "") {
+                errores.push("Debe cargar el Nombre / Sigla de la Acción.");
+            }
+
+            // 4. Validar Valor Neto
+            const valorNeto = parseFloat(document.getElementById('valorNeto').value) || 0;
+            if (valorNeto <= 0) {
+                errores.push("Debe cargar el Valor Neto (precio por acción).");
+            }
+
+            // 5. Validar Proyección de Ganancia
+            const porcGanProy = parseFloat(document.getElementById('PorcGanProy').value) || 0;
+            if (porcGanProy <= 0) {
+                errores.push("Debe cargar el porcentaje de Proyección de ganancia.");
+            }
+
+            // 6. Validar Cantidad de acciones
+            const cantidad = parseInt(document.getElementById('cantidadAcciones').value) || 0;
+            if (cantidad <= 0) {
+                errores.push("Debe cargar la Cantidad de acciones.");
+            }
+
+            if (errores.length > 0) {
+                alert("Errores de validación:\n\n" + errores.join("\n"));
+                return;
+            }
+
+            // Si pasa todas las validaciones
+            document.getElementById('contenedorPrevisualizacion').style.display = 'block';
+            document.getElementById('botonesOperacion').style.display = 'block';
+
+            // Calcular y mostrar datos
+            calcularCoeficienteBase();
+            calcularOperacion();
+
+            // Scroll hacia la previsualización
+            document.getElementById('contenedorPrevisualizacion').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function limpiarFormulario() {
+            document.getElementById('brokerConfigForm').reset();
+            limpiarCalculos();
+            document.getElementById('contenedorPrevisualizacion').style.display = 'none';
+            document.getElementById('botonesOperacion').style.display = 'none';
+        }
     </script>
+    <!-- Modal Detalle Operación -->
+    <div id="modalDetalleOperacion" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Detalle de Operación</h4>
+                </div>
+                <div class="modal-body" id="cuerpoModalDetalle">
+                    <!-- Datos Generales -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="text-primary">Datos</h5>
+                            <ul class="list-group">
+                                <li class="list-group-item"><strong>Fecha:</strong> <span id="m_fecha"></span></li>
+                                <li class="list-group-item"><strong>Broker:</strong> <span id="m_broker"></span></li>
+                                <li class="list-group-item"><strong>Acción:</strong> <span id="m_accion"></span></li>
+                                <li class="list-group-item"><strong>Cantidad:</strong> <span id="m_cantidad"></span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-primary">Tasas de Referencia</h5>
+                            <ul class="list-group">
+                                <li class="list-group-item"><strong>TNA Banco:</strong> <span id="m_tna"></span></li>
+                                <li class="list-group-item"><strong>TNA 365:</strong> <span id="m_tna365"></span></li>
+                                <li class="list-group-item"><strong>TNA 260:</strong> <span id="m_tna260"></span></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Tabla de Detalles Financieros -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped table-hover">
+                            <thead>
+                                <tr class="bg-primary text-white">
+                                    <th>Concepto</th>
+                                    <th>% Config</th>
+                                    <th>Valor Unitario</th>
+                                    <th>Valor Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- COMPRA -->
+                                <tr class="info">
+                                    <td colspan="4"><strong>OPERACIÓN DE COMPRA</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Valor Neto</td>
+                                    <td>-</td>
+                                    <td><span id="m_valorNeto"></span></td>
+                                    <td><span id="m_valorNetoTotal"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>Comisión Compra</td>
+                                    <td><span id="m_comisionPorc"></span></td>
+                                    <td><span id="m_comisionCompra"></span></td>
+                                    <td><span id="m_comisionCompraTotal"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>Derecho Mercado</td>
+                                    <td><span id="m_derechoPorc"></span></td>
+                                    <td><span id="m_derechoCompra"></span></td>
+                                    <td><span id="m_derechoCompraTotal"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>IVA Compra</td>
+                                    <td><span id="m_ivaPorc"></span></td>
+                                    <td><span id="m_ivaCompra"></span></td>
+                                    <td><span id="m_ivaCompraTotal"></span></td>
+                                </tr>
+                                <tr class="warning" style="font-weight:bold;">
+                                    <td>VALOR BRUTO COMPRA</td>
+                                    <td>-</td>
+                                    <td><span id="m_valorBrutoCompra"></span></td>
+                                    <td><span id="m_valorBrutoCompraTotal"></span></td>
+                                </tr>
+
+                                <!-- VENTA -->
+                                <tr class="info">
+                                    <td colspan="4"><strong>OPERACIÓN DE VENTA</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Ganancia Proyectada</td>
+                                    <td><span id="m_gananciaProyPorc"></span></td>
+                                    <td><span id="m_gananciaProy"></span></td>
+                                    <td><span id="m_gananciaProyTotal"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>Precio Neto Venta</td>
+                                    <td>-</td>
+                                    <td><span id="m_precioNetoVenta"></span></td>
+                                    <td><span id="m_precioNetoVentaTotal"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>Comisión Venta</td>
+                                    <td><span id="m_comisionVentaPorc"></span></td>
+                                    <!-- Asumimos mismo % que compra si no se guardó distinto -->
+                                    <td><span id="m_comisionVenta"></span></td>
+                                    <td><span id="m_comisionVentaTotal"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>Derecho Mercado Venta</td>
+                                    <td><span id="m_derechoVentaPorc"></span></td>
+                                    <td><span id="m_derechoVenta"></span></td>
+                                    <td><span id="m_derechoVentaTotal"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>IVA Venta</td>
+                                    <td><span id="m_ivaVentaPorc"></span></td>
+                                    <td><span id="m_ivaVenta"></span></td>
+                                    <td><span id="m_ivaVentaTotal"></span></td>
+                                </tr>
+                                <tr class="warning" style="font-weight:bold;">
+                                    <td>PRECIO BRUTO VENTA</td>
+                                    <td>-</td>
+                                    <td><span id="m_precioBrutoVenta"></span></td>
+                                    <td><span id="m_precioBrutoVentaTotal"></span></td>
+                                </tr>
+                                <tr class="success" style="font-weight:bold; font-size:1.1em;">
+                                    <td>GANANCIA NETA FINAL</td>
+                                    <td>-</td>
+                                    <td><span id="m_gananciaNeta"></span></td>
+                                    <td><span id="m_gananciaNetaTotal"></span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts de Bootstrap (si no están ya incluidos, necesarios para el modal) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </body>
 
 </html>

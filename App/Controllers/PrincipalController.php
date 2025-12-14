@@ -4,14 +4,19 @@ namespace App\Controllers;
 
 // Incluye tu modelo de Brokers
 use App\Models\BrokersModel;
+use App\Models\OperacionesModel;
 
 class PrincipalController
 {
     // Método por defecto: index() - Se ejecuta si la URL es /
     public function index()
     {
+        // Instanciamos operaciones model para pasar el historial inicial
+        $operacionesModel = new OperacionesModel();
+        $historial = $operacionesModel->obtenerTodas();
+
         // Cargar la Vista
-        $this->renderView('Principal/index', []);
+        $this->renderView('Principal/index', ['historial' => $historial]);
     }
 
     /**
@@ -158,8 +163,178 @@ class PrincipalController
     }
 
     /**
-     * Función auxiliar para cargar vistas y pasar datos
+     * POST /Principal/guardarTransaccion
+     * Guarda una nueva operación en la base de datos
      */
+    public function guardarTransaccion()
+    {
+        try {
+            header('Content-Type: application/json; charset=utf-8');
+
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                throw new \Exception('Método no permitido');
+            }
+
+            $json = file_get_contents('php://input');
+            $datos = json_decode($json, true);
+
+            // Log para debug
+            error_log("Datos transacción: " . print_r($datos, true));
+
+            // Ajuste para acceder a 'transaccion' si viene envuelto
+            if (isset($datos['accion']) && $datos['accion'] === 'guardarTransaccion' && isset($datos['transaccion'])) {
+                $datos = $datos['transaccion'];
+            }
+
+            // Mapeo de datos del frontend a columnas de la base de datos
+            $operacion = [
+                'tasa_banco' => isset($datos['tna']) ? floatval($datos['tna']) : 0,
+                'tn_365' => isset($datos['tnaDiaria365']) ? floatval($datos['tnaDiaria365']) : 0,
+                'tn_260' => isset($datos['tnaDiaria260']) ? floatval($datos['tnaDiaria260']) : 0,
+                'broker_id' => $datos['broker_id'] ?? $this->obtenerBrokerIdPorNombre($datos['nombreBroker']),
+                'nombre_accion' => $datos['nombreAccion'],
+                'cantidad_acciones' => $datos['cantidad'],
+                'valor_neto_compra' => $datos['valorNeto'],
+                'valor_comision_compra' => $datos['comisionCompra'],
+                'derecho_mercado_compra' => $datos['derechoMercadoCompra'],
+                'iva_compra' => $datos['ivaCompra'],
+                'valor_bruto_compra' => $datos['valorBrutoCompra'],
+                // Nuevos campos de porcentajes
+                'comision_porcentaje' => $datos['comisionPorcentaje'] ?? 0,
+                'derecho_mercado_porcentaje' => $datos['derechoMercadoPorcentaje'] ?? 0,
+                'iva_porcentaje' => $datos['ivaPorcentaje'] ?? 0,
+                'ganancia_proyectada_porcentaje' => $datos['PorcGanProy'] ?? 0,
+                'ganancia_neta_por_accion' => $datos['gananciaProyectadaValor'] / (($datos['cantidad'] > 0) ? $datos['cantidad'] : 1), // Aproximación
+                'precio_neto_venta' => $datos['precioNetoVenta'],
+                'valor_comision_venta' => $datos['comisionVenta'],
+                'derecho_mercado_venta' => $datos['derechoMercadoVenta'],
+                'iva_venta' => $datos['ivaVenta'],
+                'precio_bruto_venta' => $datos['precioBrutoVenta'],
+                'ganancia_neta_total' => $datos['gananciaNetaTotal'],
+                'fecha_operacion_venta' => date('Y-m-d'), // Por ahora fecha actual,
+                'vigente' => 1
+            ];
+
+            $operacionesModel = new OperacionesModel();
+            $id = $operacionesModel->insertar($operacion);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Operación guardada exitosamente',
+                'id' => $id
+            ]);
+
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * GET /Principal/historialOperaciones
+     * Obtiene el historial de operaciones actualizado
+     */
+    public function historialOperaciones()
+    {
+        try {
+            header('Content-Type: application/json; charset=utf-8');
+
+            $operacionesModel = new OperacionesModel();
+            $historial = $operacionesModel->obtenerTodas();
+
+            echo json_encode([
+                'success' => true,
+                'data' => $historial
+            ]);
+
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * POST /Principal/cambiarEstadoOperacion
+     * Cambia el estado vigente de una operación
+     */
+    public function cambiarEstadoOperacion()
+    {
+        try {
+            header('Content-Type: application/json; charset=utf-8');
+
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                throw new \Exception('Método no permitido');
+            }
+
+            $json = file_get_contents('php://input');
+            $datos = json_decode($json, true);
+
+            if (empty($datos['id']) || !isset($datos['vigente'])) {
+                throw new \Exception('Datos incompletos');
+            }
+
+            $operacionesModel = new OperacionesModel();
+            $resultado = $operacionesModel->actualizarEstado($datos['id'], $datos['vigente']);
+
+            if ($resultado) {
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'No se pudo actualizar']);
+            }
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * POST /Principal/eliminarOperacion
+     * Elimina una operación de la BD
+     */
+    public function eliminarOperacion()
+    {
+        try {
+            header('Content-Type: application/json; charset=utf-8');
+
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                throw new \Exception('Método no permitido');
+            }
+
+            $json = file_get_contents('php://input');
+            $datos = json_decode($json, true);
+
+            if (empty($datos['id'])) {
+                throw new \Exception('ID requerido');
+            }
+
+            $operacionesModel = new OperacionesModel();
+            $resultado = $operacionesModel->eliminar($datos['id']);
+
+            if ($resultado) {
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'No se pudo eliminar']);
+            }
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    // Auxiliar para buscar ID de broker por nombre (temporal, idealmente el front debería mandar el ID)
+    private function obtenerBrokerIdPorNombre($nombreBroker)
+    {
+        $brokersModel = new BrokersModel();
+        // Asumiendo que existe un método para buscar por nombre o traer todos y filtrar
+        // Por eficiencia, mejor modificaremos el front para enviar broker_id, pero por ahora:
+        $todos = $brokersModel->obtenerTodos();
+        foreach ($todos as $b) {
+            if ($b['nombreBroker'] === $nombreBroker) {
+                return $b['id'];
+            }
+        }
+        return null;
+    }
     protected function renderView(string $viewPath, array $data = [])
     {
         // Extrae los datos del array como variables individuales
